@@ -79,8 +79,10 @@ def collect_host_attributes(host)
     end
   end
   attributes[:service_tags] = service_tag_array
-  attributes[:hostname] = get_host_config(host).network.dnsConfig.hostName
-  attributes[:version] = get_host_config(host).product.version
+  if get_host_config(host)
+    attributes[:hostname] = get_host_config(host).network.dnsConfig.hostName
+    attributes[:version] = get_host_config(host).product.version
+  end
   attributes
 end
 
@@ -96,12 +98,17 @@ def collect_datastore_attributes(ds, parent=nil)
       host = ds.host.first.key
     end
     host_config = get_host_config(host)
+    return attributes if host_config.nil?
     mount_info = host_config.fileSystemVolume.mountInfo.find{|x| x.volume.name == ds.name}
     attributes[:volume_name] = mount_info.volume.name
+    # Capacity will be returned back in gigabytes
+    attributes[:capacity] = mount_info.volume.capacity / 1024.0 / 1024.0 / 1024.0
     if mount_info.volume.is_a?(RbVmomi::VIM::HostNasVolume)
       attributes[:nfs_host] = mount_info.volume.remoteHost
+      attributes[:nfs_path] = mount_info.volume.remotePath
     elsif mount_info.volume.is_a?(RbVmomi::VIM::HostVmfsVolume)
       scsi_lun_disk_name = mount_info.volume.extent.first.diskName
+      attributes[:scsi_device_id] = scsi_lun_disk_name
       host_storage_device = host_config.storageDevice
       host_scsi_disk = host_storage_device.scsiLun.find{|lun| lun.canonicalName == scsi_lun_disk_name}
       unless host_scsi_disk.nil?
