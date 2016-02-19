@@ -18,5 +18,4 @@ version    git_version
 ## Add dependencies, if any:
 dependency 'puppetlabs/stdlib', '>= 2.0.0'
 dependency 'vmware/vmware_lib', '>= 0.0.1'
-dependency 'puppetlabs/pe_gem', '>= 0.0.1'
 dependency 'nanliu/staging', '>= 0.2.1'
