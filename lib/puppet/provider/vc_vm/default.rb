@@ -120,12 +120,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   end
 
   def destroy
-    if power_state == 'poweredOn'
-      Puppet.notice "Powering off VM #{resource[:name]} prior to removal."
-      vm.PowerOffVM_Task.wait_for_completion
-    else
-      Puppet.debug "Virtual machine state: #{power_state}"
+    # if the vm is not powered off, attempt to do so
+    if vm.runtime.powerState != 'poweredOff'
+      self.send(:power_state=, :poweredOff)
     end
+    raise "vm: resource[:name] is not in the state: poweredOff" if vm.runtime.powerState != 'poweredOff'
     vm.Destroy_Task.wait_for_completion
   end
 
